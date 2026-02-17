@@ -1,26 +1,144 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-jakarta);
+
+  /* Override Shadcn colors with Design Tokens */
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  --radius: 0.5rem;
+  
+  /* HealthPilot Brand Colors (from Figma) */
+  /* Main Teal: #086375 */
+  --primary: #086375; 
+  --primary-foreground: #ffffff;
+  
+  /* Light Mint: #d2f6ef */
+  --secondary: #d2f6ef;
+  --secondary-foreground: #086375;
+  
+  /* Bright Mint/Teal: #1dd3b0 - Used for accents? */
+  --accent: #1dd3b0;
+  --accent-foreground: #0c5446;
+  
+  /* Neutral / Background */
+  --background: #ffffff;
+  --foreground: #101828; /* Dark Grey/Blue */
+  
+  /* Surface / Card */
+  --card: #ffffff;
+  --card-foreground: #101828;
+  
+  --popover: #ffffff;
+  --popover-foreground: #101828;
+  
+  --muted: #f2f2f2;
+  --muted-foreground: #4a5565;
+  
+  --destructive: #ef4444; /* Standard Red */
+  --destructive-foreground: #ffffff;
+
+  --border: #d4d4d4;
+  --input: #d4d4d4;
+  --ring: #086375;
+  
+  /* Charts - Keeping existing oklch or mapping to branding if needed */
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #101828;
+  --sidebar-primary: #086375;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #d2f6ef;
+  --sidebar-accent-foreground: #086375;
+  --sidebar-border: #d4d4d4;
+  --sidebar-ring: #086375;
+}
+
+.dark {
+  /* Dark Mode Mappings (Approximation based on light mode reversed) */
+  --background: #101828;
+  --foreground: #ffffff;
+  
+  --card: #171717;
+  --card-foreground: #ffffff;
+  --popover: #171717;
+  --popover-foreground: #ffffff;
+  
+  /* In dark mode, primary might need to be lighter or stay same */
+  --primary: #0fa3a1; /* Lighter Teal */
+  --primary-foreground: #ffffff;
+  
+  --secondary: #0c5446; /* Darker Mint */
+  --secondary-foreground: #d2f6ef;
+  
+  --muted: #2b2b2b;
+  --muted-foreground: #aaaaaa;
+  
+  --accent: #0c8281;
+  --accent-foreground: #ffffff;
+  
+  --destructive: #7f1d1d;
+  --destructive-foreground: #ffffff;
+  
+  --border: #2b2b2b;
+  --input: #2b2b2b;
+  --ring: #0fa3a1;
+  
+  --sidebar: #101828;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #0fa3a1;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #0c5446;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #2b2b2b;
+  --sidebar-ring: #0fa3a1;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  body {
+    @apply bg-background text-foreground;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
 }
