@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -9,16 +11,12 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Activity, Info, Save, ChevronRight, AlertCircle } from "lucide-react";
-
-interface HealthSummaryData {
-  healthSummary: string;
-  recommendations: string[];
-  warnings: string[];
-}
+import { Activity, Info, Save, ChevronRight, AlertCircle, X, ClipboardList, BarChart3, Lightbulb, ArrowUpRight } from "lucide-react";
+import type { HealthSummaryData } from "@/types";
 
 interface GeneratedHealthSummaryProps {
   data: HealthSummaryData;
+  summaryId?: string;
   onNextSteps?: () => void;
   onWhyThis?: () => void;
   onSaveLater?: () => void;
@@ -26,11 +24,130 @@ interface GeneratedHealthSummaryProps {
 
 export function GeneratedHealthSummary({
   data,
+  summaryId,
   onNextSteps,
   onWhyThis,
   onSaveLater,
 }: GeneratedHealthSummaryProps) {
+  const router = useRouter();
+  const [showWhyModal, setShowWhyModal] = useState(false);
+
+  const handleWhyThis = () => {
+    setShowWhyModal(true);
+    onWhyThis?.();
+  };
+
   return (
+    <>
+      {/* Why This Summary Modal */}
+      {showWhyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setShowWhyModal(false)}
+          />
+
+          {/* Modal */}
+          <div className="relative bg-white rounded-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto shadow-xl">
+            {/* Close button */}
+            <button
+              onClick={() => setShowWhyModal(false)}
+              className="absolute top-4 right-4 p-1 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <X className="h-5 w-5 text-gray-500" />
+            </button>
+
+            {/* Content */}
+            <div className="p-6 pt-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                Why This Summary?
+              </h2>
+
+              <p className="text-gray-600 mb-6">
+                This summary is based on the information you shared. It highlights health signals to help you understand your current condition, not a medical diagnosis.
+              </p>
+
+              {/* Sections */}
+              <div className="space-y-5">
+                {/* What we considered */}
+                <div className="flex gap-3">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                    <ClipboardList className="h-5 w-5 text-gray-700" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-2">What we considered</h3>
+                    <ul className="text-sm text-gray-600 space-y-1">
+                      <li>• Your answers during the guided health check</li>
+                      <li>• Symptoms you reported</li>
+                      <li>• Lifestyle factors (sleep, stress, activity)</li>
+                      <li>• Blood test results (if uploaded)</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* How we interpreted it */}
+                <div className="flex gap-3">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                    <BarChart3 className="h-5 w-5 text-gray-700" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-2">How we interpreted it</h3>
+                    <ul className="text-sm text-gray-600 space-y-1">
+                      <li>• We look for patterns, not single answers</li>
+                      <li>• Signals are grouped by severity and consistency</li>
+                      <li>• Blood markers are used to add context, not conclusions</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* What this means */}
+                <div className="flex gap-3">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                    <Lightbulb className="h-5 w-5 text-gray-700" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-2">What this means</h3>
+                    <ul className="text-sm text-gray-600 space-y-1">
+                      <li>• This summary shows areas to pay attention to</li>
+                      <li>• It does not replace professional medical advice</li>
+                      <li>• You can update your answers or add new data anytime</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* What you can do next */}
+                <div className="flex gap-3">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                    <ArrowUpRight className="h-5 w-5 text-gray-700" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-2">What you can do next</h3>
+                    <ul className="text-sm text-gray-600 space-y-1">
+                      <li>• View recommended next steps</li>
+                      <li>• Upload or update blood test results</li>
+                      <li>• Start a new health check if your condition changes</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Got it button */}
+              <div className="mt-8 flex justify-center">
+                <Button
+                  variant="outline"
+                  className="px-8 border-[#14b8a6] text-[#14b8a6] hover:bg-[#14b8a6]/10"
+                  onClick={() => setShowWhyModal(false)}
+                >
+                  Got it!
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main content */}
     <div className="space-y-8 animate-in fade-in zoom-in duration-500">
       {/* Header */}
       <div className="text-center space-y-2">
@@ -171,13 +288,23 @@ export function GeneratedHealthSummary({
 
       {/* Footer Buttons */}
       <div className="space-y-3">
-        <Button size="lg" className="w-full" onClick={onNextSteps}>
+        <Button
+          size="lg"
+          className="w-full"
+          onClick={() => {
+            if (onNextSteps) {
+              onNextSteps();
+            } else if (summaryId) {
+              router.push(`/health-summary/${summaryId}/next-steps`);
+            }
+          }}
+        >
           View recommended next steps
           <ChevronRight className="ml-2 h-4 w-4" />
         </Button>
 
         <div className="flex gap-3">
-          <Button variant="outline" className="flex-1" onClick={onWhyThis}>
+          <Button variant="outline" className="flex-1" onClick={handleWhyThis}>
             <Info className="mr-2 h-4 w-4" />
             Why this summary?
           </Button>
@@ -188,5 +315,6 @@ export function GeneratedHealthSummary({
         </div>
       </div>
     </div>
+    </>
   );
 }

@@ -3,7 +3,7 @@
  * Handles communication with backend intake endpoints
  */
 
-import { useAuthStore } from "@/core/stores/auth.store";
+import { api } from "./client";
 
 export interface IntakeFormData {
   // Biometrics & Demographics (Flat structure from Wizard)
@@ -63,6 +63,16 @@ export interface CreateIntakeResponse {
   createdAt: string;
 }
 
+export interface NextStepRecommendation {
+  id: string;
+  title: string;
+  description: string;
+  effortLevel: "LOW" | "MODERATE" | "HIGH";
+  icon: "sleep" | "food" | "doctor" | "exercise" | "tracking" | "mental_health" | "supplements";
+  whatHappensNext: string;
+  learnMoreUrl?: string;
+}
+
 export interface CompleteIntakeResponse {
   intakeId: string;
   status: string;
@@ -71,35 +81,14 @@ export interface CompleteIntakeResponse {
   healthSummary: string;
   recommendations: string[];
   warnings: string[];
+  nextSteps?: NextStepRecommendation[];
 }
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4001';
-
-/**
- * Helper to get headers with auth token
- */
-const getHeaders = () => {
-  const token = useAuthStore.getState().token;
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
-  return headers;
-};
 
 /**
  * Create a new health intake
  */
 export async function createIntake(formData: IntakeFormData): Promise<CreateIntakeResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/intakes`, {
-    method: 'POST',
-    headers: getHeaders(),
-    body: JSON.stringify(formData),
-  });
+  const response = await api.post('/api/v1/intakes', formData);
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Failed to create intake' }));
@@ -114,10 +103,7 @@ export async function createIntake(formData: IntakeFormData): Promise<CreateInta
  * Complete intake and trigger AI health summary generation
  */
 export async function completeIntake(intakeId: string): Promise<CompleteIntakeResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/intakes/${intakeId}/complete`, {
-    method: 'POST',
-    headers: getHeaders(),
-  });
+  const response = await api.post(`/api/v1/intakes/${intakeId}/complete`);
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Failed to complete intake' }));
@@ -132,9 +118,7 @@ export async function completeIntake(intakeId: string): Promise<CompleteIntakeRe
  * Get intake by ID
  */
 export async function getIntake(intakeId: string): Promise<any> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/intakes/${intakeId}`, {
-    headers: getHeaders(),
-  });
+  const response = await api.get(`/api/v1/intakes/${intakeId}`);
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Failed to fetch intake' }));
@@ -149,9 +133,7 @@ export async function getIntake(intakeId: string): Promise<any> {
  * Get user's intakes
  */
 export async function getIntakes(): Promise<any[]> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/intakes`, {
-    headers: getHeaders(),
-  });
+  const response = await api.get('/api/v1/intakes');
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Failed to fetch intakes' }));

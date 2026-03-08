@@ -1,13 +1,17 @@
-import { IntakeWorkflow } from "@/components/intake/IntakeWorkflow";
+import { HomeContent } from "@/components/home";
 import { getIntakeConfig } from "@/lib/intake";
+import { getLandingSettings } from "@/lib/landing-settings";
 
 export default async function Home() {
-  // Fetch intake config on the server
-  const intakeConfig = await getIntakeConfig();
+  const [intakeConfig, landingSettings] = await Promise.all([
+    getIntakeConfig(),
+    getLandingSettings(),
+  ]);
 
   return (
-    <main className="min-h-screen bg-white">
-      <IntakeWorkflow initialConfig={intakeConfig} />
-    </main>
+    <HomeContent
+      intakeConfig={intakeConfig}
+      landingSettings={landingSettings}
+    />
   );
 }

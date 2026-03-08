@@ -4,6 +4,12 @@ import userEvent from '@testing-library/user-event'
 import { DynamicWizard } from '../DynamicWizard'
 import { MOCK_INTAKE_CONFIG } from '@/lib/mock-intake'
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+  }),
+}))
+
 // Mock the API functions
 vi.mock('@/lib/api/intake', () => ({
   createIntake: vi.fn(() => Promise.resolve({ id: 'test-intake-123' })),
@@ -22,11 +28,31 @@ global.fetch = vi.fn(() =>
       data: MOCK_INTAKE_CONFIG
     })
   })
-) as any
+) as unknown as typeof fetch
 
 describe('DynamicWizard - Integration Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  it('renders the integrated blood test banner when a blood test id is provided', () => {
+    render(
+      <DynamicWizard
+        initialConfig={MOCK_INTAKE_CONFIG}
+        bloodTestId="blood-test-123"
+        bloodTestSource="upload"
+        displayStepOffset={1}
+        displayTotalSteps={5}
+      />
+    )
+
+    expect(
+      screen.getByText(/Your blood test results have been integrated/i)
+    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /View uploaded result/i })).toHaveAttribute(
+      'href',
+      '/blood-analysis/results/blood-test-123'
+    )
   })
 
   describe('Step Navigation with Checkbox Interactions', () => {
@@ -43,8 +69,6 @@ describe('DynamicWizard - Integration Tests', () => {
 
       // Wait for initial render
       await waitFor(() => expect(renderCount).toBeGreaterThan(0))
-
-      const initialRenders = renderCount
 
       // Navigate to step 3 (lifestyle with checkboxes)
       // Find and click Continue button multiple times
@@ -277,7 +301,7 @@ describe('DynamicWizard - Integration Tests', () => {
       for (let i = 0; i < 5; i++) {
         try {
           await user.click(continueButton)
-        } catch (e) {
+        } catch {
           // Click might fail if button is disabled during transition
           break
         }

@@ -1,28 +1,42 @@
 "use client";
 
-import React, { useEffect } from "react";
-import { useForm, Controller } from "react-hook-form";
+import React, { useEffect, useMemo } from "react";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DatePicker } from "@/components/ui/date-picker";
 import { IntakeStep, StepField } from "@/types/intake";
+import { isFieldVisible, pruneHiddenFieldAnswers } from "@/lib/intake-logic";
 import { ArrowRight, Check, Upload, ChevronRight } from "lucide-react";
 
 interface DynamicStepProps {
     step: IntakeStep;
-    data: any;
-    onNext: (data: any) => void;
+    data: Record<string, unknown>;
+    onNext: (data: Record<string, unknown>) => void;
     onBack: () => void;
     isFirstStep: boolean;
     isLastStep: boolean;
 }
 
-export function DynamicStep({ step, data, onNext, onBack, isFirstStep, isLastStep }: DynamicStepProps) {
-    const { register, control, handleSubmit, reset, formState: { errors } } = useForm({
+export function DynamicStep(props: DynamicStepProps) {
+    const { step, data, onNext, onBack, isFirstStep } = props;
+    const { register, control, handleSubmit, reset, formState: { errors } } = useForm<Record<string, unknown>>({
         defaultValues: data || {}
     });
+    const watchedValues = useWatch({ control });
+
+    const mergedData = useMemo(
+        () => ({ ...(data || {}), ...((watchedValues as Record<string, unknown>) || {}) }),
+        [data, watchedValues]
+    );
+
+    const visibleFields = useMemo(() => {
+        const sanitizedStepData = pruneHiddenFieldAnswers([step], mergedData);
+        return step.fields.filter((field) => isFieldVisible(field, sanitizedStepData));
+    }, [step, mergedData]);
 
     // Reset form when step changes to load new defaults
     useEffect(() => {
@@ -31,8 +45,13 @@ export function DynamicStep({ step, data, onNext, onBack, isFirstStep, isLastSte
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [step.id, reset]);
 
-    const onSubmit = (formData: any) => {
-        onNext(formData);
+    const onSubmit = (formData: Record<string, unknown>) => {
+        const sanitizedStepData = pruneHiddenFieldAnswers([step], formData);
+        const visibleFieldIds = new Set(visibleFields.map((field) => field.id));
+        const filteredData = Object.fromEntries(
+            Object.entries(sanitizedStepData).filter(([fieldId]) => visibleFieldIds.has(fieldId))
+        );
+        onNext(filteredData);
     };
 
     const renderField = (field: StepField) => {
@@ -41,17 +60,71 @@ export function DynamicStep({ step, data, onNext, onBack, isFirstStep, isLastSte
         switch (field.type) {
             case 'text':
             case 'number':
-            case 'date':
+            case 'email':
+            case 'phone':
                 return (
                     <div key={field.id} className="grid gap-3">
                         <Label htmlFor={field.id} className="text-[#101828] font-semibold">{field.label}</Label>
                         <Input
                             id={field.id}
-                            type={field.type}
+                            type={field.type === 'phone' ? 'tel' : field.type}
                             placeholder={field.placeholder}
                             className="h-14 rounded-2xl border-[#EAECF0] focus:ring-[#14b8a6] focus:border-[#14b8a6] text-lg px-6"
                             {...register(field.id, { required: field.required && "This field is required" })}
                         />
+                        {field.helperText && <p className="text-xs text-[#667085]">{field.helperText}</p>}
+                        {error && <p className="text-sm text-destructive">{error.message as string}</p>}
+                    </div>
+                );
+
+            case 'date':
+                return (
+                    <div key={field.id} className="grid gap-3">
+                        <Controller
+                            name={field.id}
+                            control={control}
+                            rules={{ required: field.required && "This field is required" }}
+                            render={({ field: { onChange, value }, fieldState }) => {
+                                // Parse value to Date safely
+                                let dateValue: Date | undefined;
+                                if (value) {
+                                    if (value instanceof Date) {
+                                        dateValue = value;
+                                    } else if (typeof value === 'string') {
+                                        const parsed = new Date(value);
+                                        if (!isNaN(parsed.getTime())) {
+                                            dateValue = parsed;
+                                        }
+                                    }
+                                }
+                                return (
+                                    <DatePicker
+                                        value={dateValue}
+                                        onChange={(date) => {
+                                            onChange(date);
+                                        }}
+                                        placeholder={field.placeholder || "Select date"}
+                                        label={field.label}
+                                        helperText={field.helperText}
+                                        error={fieldState.error?.message as string}
+                                    />
+                                );
+                            }}
+                        />
+                    </div>
+                );
+
+            case 'textarea':
+                return (
+                    <div key={field.id} className="grid gap-3">
+                        <Label htmlFor={field.id} className="text-[#101828] font-semibold">{field.label}</Label>
+                        <textarea
+                            id={field.id}
+                            placeholder={field.placeholder}
+                            className="min-h-[120px] rounded-2xl border border-[#EAECF0] focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] text-base px-6 py-4"
+                            {...register(field.id, { required: field.required && "This field is required" })}
+                        />
+                        {field.helperText && <p className="text-xs text-[#667085]">{field.helperText}</p>}
                         {error && <p className="text-sm text-destructive">{error.message as string}</p>}
                     </div>
                 );
@@ -66,7 +139,7 @@ export function DynamicStep({ step, data, onNext, onBack, isFirstStep, isLastSte
                             render={({ field: { onChange, value } }) => (
                                 <RadioGroup
                                     onValueChange={onChange}
-                                    defaultValue={value}
+                                    defaultValue={typeof value === "string" ? value : undefined}
                                     className="grid gap-3"
                                 >
                                     {field.options?.map((option) => {
@@ -104,11 +177,13 @@ export function DynamicStep({ step, data, onNext, onBack, isFirstStep, isLastSte
                                 </RadioGroup>
                             )}
                         />
+                        {field.helperText && <p className="text-xs text-[#667085]">{field.helperText}</p>}
                         {error && <p className="text-sm text-destructive font-medium">{error.message as string}</p>}
                     </div>
                 );
 
             case 'checkbox':
+            case 'multi_select':
                 return (
                     <div key={field.id} className="grid gap-4">
                         <Controller
@@ -161,6 +236,79 @@ export function DynamicStep({ step, data, onNext, onBack, isFirstStep, isLastSte
                                 );
                             }}
                         />
+                        {field.helperText && <p className="text-xs text-[#667085]">{field.helperText}</p>}
+                    </div>
+                );
+
+            case 'select':
+                return (
+                    <div key={field.id} className="grid gap-3">
+                        <Label htmlFor={field.id} className="text-[#101828] font-semibold">{field.label}</Label>
+                        <select
+                            id={field.id}
+                            className="h-14 rounded-2xl border border-[#EAECF0] focus:ring-2 focus:ring-[#14b8a6] focus:border-[#14b8a6] text-base px-6 bg-white"
+                            {...register(field.id, { required: field.required && "Please select an option" })}
+                        >
+                            <option value="">{field.placeholder || "Select an option"}</option>
+                            {field.options?.map((option) => (
+                                <option key={option.id} value={option.value}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </select>
+                        {field.helperText && <p className="text-xs text-[#667085]">{field.helperText}</p>}
+                        {error && <p className="text-sm text-destructive">{error.message as string}</p>}
+                    </div>
+                );
+
+            case 'boolean':
+                return (
+                    <div key={field.id} className="grid gap-3">
+                        <Label className="text-[#101828] font-semibold">{field.label}</Label>
+                        <Controller
+                            name={field.id}
+                            control={control}
+                            defaultValue={undefined}
+                            rules={{ required: field.required && "Please choose Yes or No" }}
+                            render={({ field: { onChange, value } }) => (
+                                <RadioGroup
+                                    onValueChange={(selected) => onChange(selected === 'true')}
+                                    value={typeof value === 'boolean' ? String(value) : ''}
+                                    className="grid grid-cols-1 gap-3 sm:grid-cols-2"
+                                >
+                                    {[
+                                        { key: 'true', label: 'Yes' },
+                                        { key: 'false', label: 'No' },
+                                    ].map((option) => {
+                                        const isSelected = String(value) === option.key;
+                                        return (
+                                            <div key={`${field.id}-${option.key}`}>
+                                                <RadioGroupItem
+                                                    value={option.key}
+                                                    id={`${field.id}-${option.key}`}
+                                                    className="peer sr-only"
+                                                />
+                                                <Label
+                                                    htmlFor={`${field.id}-${option.key}`}
+                                                    className={`flex items-center justify-between rounded-2xl border p-4 transition-all duration-300 hover:cursor-pointer min-h-[72px] ${isSelected
+                                                        ? 'bg-[#08514e] border-[#08514e] text-white shadow-lg'
+                                                        : 'bg-white border-[#EAECF0] text-[#101828] hover:border-[#14b8a6]/40 hover:bg-[#F9FAFB]'
+                                                        }`}
+                                                >
+                                                    <span className="font-extrabold text-lg">{option.label}</span>
+                                                    <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center ${isSelected ? 'bg-white border-white' : 'border-[#EAECF0]'
+                                                        }`}>
+                                                        {isSelected && <Check className="h-3.5 w-3.5 text-[#08514e]" strokeWidth={4} />}
+                                                    </div>
+                                                </Label>
+                                            </div>
+                                        );
+                                    })}
+                                </RadioGroup>
+                            )}
+                        />
+                        {field.helperText && <p className="text-xs text-[#667085]">{field.helperText}</p>}
+                        {error && <p className="text-sm text-destructive">{error.message as string}</p>}
                     </div>
                 );
 
@@ -189,7 +337,12 @@ export function DynamicStep({ step, data, onNext, onBack, isFirstStep, isLastSte
             </div>
 
             <div className="grid gap-4">
-                {step.fields?.map(field => renderField(field))}
+                {visibleFields.map((field) => renderField(field))}
+                {visibleFields.length === 0 && (
+                    <div className="rounded-2xl border border-dashed border-[#EAECF0] bg-[#F9FAFB] p-4 text-sm text-[#667085]">
+                        No questions are required for this step based on your previous answers.
+                    </div>
+                )}
             </div>
 
             {/* Blood Results Section - Significantly More Compact */}

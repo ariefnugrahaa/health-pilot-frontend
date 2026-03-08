@@ -93,3 +93,24 @@ export interface AnalyticsData {
     score: number;
   }[];
 }
+
+// Next Step Recommendation Types
+export type EffortLevel = "LOW" | "MODERATE" | "HIGH";
+export type NextStepIcon = "sleep" | "food" | "doctor" | "exercise" | "tracking" | "mental_health" | "supplements";
+
+export interface NextStepRecommendation {
+  id: string;
+  title: string;
+  description: string;
+  effortLevel: EffortLevel;
+  icon: NextStepIcon;
+  whatHappensNext: string;
+  learnMoreUrl?: string;
+}
+
+export interface HealthSummaryData {
+  healthSummary: string;
+  recommendations: string[];
+  warnings: string[];
+  nextSteps?: NextStepRecommendation[];
+}

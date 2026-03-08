@@ -1,4 +1,15 @@
-export type StepType = 'radio' | 'text' | 'number' | 'date' | 'select' | 'checkbox';
+export type StepType =
+  | 'radio'
+  | 'text'
+  | 'number'
+  | 'date'
+  | 'select'
+  | 'checkbox'
+  | 'multi_select'
+  | 'textarea'
+  | 'email'
+  | 'phone'
+  | 'boolean';
 
 export interface StepOption {
     id: string;
@@ -12,6 +23,7 @@ export interface StepField {
     type: StepType;
     label: string;
     placeholder?: string;
+    helperText?: string;
     required?: boolean;
     options?: StepOption[]; // For radio/select/checkbox
     validation?: {
@@ -19,12 +31,15 @@ export interface StepField {
         max?: number;
         pattern?: string;
     };
+    dependsOnField?: string;
+    dependsOnValue?: string;
 }
 
 export interface IntakeStep {
     id: string;
     title: string;
     description?: string;
+    isOptional?: boolean;
     fields: StepField[];
 }
 
