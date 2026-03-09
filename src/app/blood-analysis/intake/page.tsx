@@ -1,11 +1,12 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowRight, Clock3, HeartPulse, ShieldCheck, X } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 
-export default function BloodAnalysisIntakePage() {
+function BloodAnalysisIntakeContent() {
   const searchParams = useSearchParams();
   const bloodTestId = searchParams.get("bloodTestId");
   const backHref = bloodTestId ? `/blood-analysis/results/${bloodTestId}` : "/blood-analysis";
@@ -112,5 +113,26 @@ export default function BloodAnalysisIntakePage() {
         </div>
       </main>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-[#f5f5f5]">
+      <Header />
+      <main className="mx-auto max-w-[1320px] px-6 pb-20 pt-14 lg:px-10">
+        <div className="flex items-center justify-center py-40">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" />
+        </div>
+      </main>
+    </div>
+  );
+}
+
+export default function BloodAnalysisIntakePage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <BloodAnalysisIntakeContent />
+    </Suspense>
   );
 }

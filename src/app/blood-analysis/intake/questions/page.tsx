@@ -1,11 +1,12 @@
 "use client";
 
+import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { DynamicWizard } from "@/components/intake/dynamic/DynamicWizard";
 
 const BLOOD_ENHANCED_INTAKE = "Blood-Enhanced Intake";
 
-export default function BloodAnalysisIntakeQuestionsPage() {
+function BloodAnalysisIntakeQuestionsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const bloodTestId = searchParams.get("bloodTestId");
@@ -37,5 +38,23 @@ export default function BloodAnalysisIntakeQuestionsPage() {
         }}
       />
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-[#f5f5f5] px-4 py-8">
+      <div className="flex items-center justify-center py-40">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" />
+      </div>
+    </div>
+  );
+}
+
+export default function BloodAnalysisIntakeQuestionsPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <BloodAnalysisIntakeQuestionsContent />
+    </Suspense>
   );
 }

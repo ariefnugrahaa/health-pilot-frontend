@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, ChevronDown, ChevronUp, Loader2, Radio } from "lucide-react";
@@ -42,7 +42,7 @@ function extractSummaryBullets(report: BloodTestReport, intake: IntakeResponse |
   return bullets.slice(0, 5);
 }
 
-export default function BloodAnalysisSummaryPage() {
+function BloodAnalysisSummaryContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const intakeId = searchParams.get("intakeId");
@@ -115,40 +115,40 @@ export default function BloodAnalysisSummaryPage() {
           </div>
         ) : (
           <>
-            <section className="mx-auto max-w-[1200px] text-center">
-              <h1 className="text-[68px] font-semibold leading-none tracking-[-0.05em] text-[#202124]">
+            <section className="mx-auto max-w-[800px] text-center">
+              <h1 className="text-[28px] md:text-[32px] font-bold tracking-tight text-[#202124]">
                 Your In-Depth Health Summary
               </h1>
-              <p className="mt-8 text-[30px] leading-[1.5] text-[#5f6368]">
+              <p className="mt-4 text-[16px] leading-[1.6] text-[#5f6368]">
                 Based on your detailed intake and blood test results, here&apos;s a refined summary of your key health insights and areas to focus on.
               </p>
             </section>
 
-            <section className="mx-auto mt-14 max-w-[1260px] space-y-10">
-              <div className="overflow-hidden rounded-[28px] border border-[#d9dde3] bg-white shadow-[0_12px_36px_rgba(16,24,40,0.07)]">
+            <section className="mx-auto mt-10 max-w-[960px] space-y-6">
+              <div className="overflow-hidden rounded-2xl border border-[#d9dde3] bg-white shadow-sm">
                 <button
                   type="button"
-                  className="flex w-full items-center justify-between px-12 py-10 text-left"
+                  className="flex w-full items-center justify-between px-6 py-5 md:px-8 md:py-6 text-left"
                   onClick={() => setPatternsExpanded((current) => !current)}
                 >
-                  <div className="flex items-center gap-6">
-                    <Radio className="h-11 w-11 text-[#202124]" />
-                    <h2 className="text-[42px] font-semibold tracking-[-0.04em] text-[#202124]">
+                  <div className="flex items-center gap-4">
+                    <Radio className="h-6 w-6 text-[#202124]" />
+                    <h2 className="text-[20px] font-semibold text-[#202124]">
                       Health Patterns &amp; Recommendations
                     </h2>
                   </div>
                   {patternsExpanded ? (
-                    <ChevronUp className="h-12 w-12 text-[#202124]" />
+                    <ChevronUp className="h-6 w-6 text-[#202124]" />
                   ) : (
-                    <ChevronDown className="h-12 w-12 text-[#202124]" />
+                    <ChevronDown className="h-6 w-6 text-[#202124]" />
                   )}
                 </button>
 
                 {patternsExpanded && (
-                  <div className="px-14 pb-12 text-[22px] leading-[1.7] text-[#202124]">
-                    <ul className="space-y-6">
+                  <div className="px-6 pb-6 md:px-14 md:pb-8 text-[14px] leading-relaxed text-[#475467]">
+                    <ul className="space-y-4">
                       {bullets.map((bullet) => (
-                        <li key={bullet} className="list-disc">
+                        <li key={bullet} className="list-disc ml-4">
                           {bullet}
                         </li>
                       ))}
@@ -158,27 +158,27 @@ export default function BloodAnalysisSummaryPage() {
               </div>
 
               {report && (
-                <div className="overflow-hidden rounded-[28px] border border-[#d9dde3] bg-white shadow-[0_12px_36px_rgba(16,24,40,0.07)]">
+                <div className="overflow-hidden rounded-2xl border border-[#d9dde3] bg-white shadow-sm">
                   <button
                     type="button"
-                    className="flex w-full items-center justify-between px-12 py-10 text-left"
+                    className="flex w-full items-center justify-between px-6 py-5 md:px-8 md:py-6 text-left"
                     onClick={() => setRecapExpanded((current) => !current)}
                   >
-                    <div className="flex items-center gap-6">
-                      <Radio className="h-11 w-11 text-[#202124]" />
-                      <h2 className="text-[42px] font-semibold tracking-[-0.04em] text-[#202124]">
+                    <div className="flex items-center gap-4">
+                      <Radio className="h-6 w-6 text-[#202124]" />
+                      <h2 className="text-[20px] font-semibold text-[#202124]">
                         Blood Test Recap
                       </h2>
                     </div>
                     {recapExpanded ? (
-                      <ChevronUp className="h-12 w-12 text-[#202124]" />
+                      <ChevronUp className="h-6 w-6 text-[#202124]" />
                     ) : (
-                      <ChevronDown className="h-12 w-12 text-[#202124]" />
+                      <ChevronDown className="h-6 w-6 text-[#202124]" />
                     )}
                   </button>
 
                   {recapExpanded && (
-                    <div className="grid gap-6 px-10 pb-10 md:grid-cols-2 xl:grid-cols-4">
+                    <div className="grid gap-4 px-6 pb-6 md:px-8 md:pb-8 md:grid-cols-2 xl:grid-cols-4">
                       {recapBiomarkers.map((biomarker) => (
                         <BiomarkerCard key={biomarker.id} biomarker={biomarker} compact />
                       ))}
@@ -188,25 +188,44 @@ export default function BloodAnalysisSummaryPage() {
               )}
             </section>
 
-            <div className="mx-auto mt-16 flex max-w-[1260px] flex-col gap-5 md:flex-row md:justify-between">
+            <div className="mx-auto mt-10 flex max-w-[960px] flex-col gap-4 md:flex-row md:justify-center">
               <Button
                 asChild
                 variant="outline"
-                className="h-[78px] rounded-[18px] border-[#14b8a6] px-10 text-[22px] font-medium text-[#129b99] hover:bg-[#effcfb]"
+                className="h-[48px] rounded-lg border-[#14b8a6] px-8 text-[16px] font-medium text-[#129b99] hover:bg-[#effcfb] w-full md:w-auto"
               >
                 <Link href={backHref}>Back to summary</Link>
               </Button>
               <Button
                 onClick={() => router.push(nextStepsHref)}
-                className="h-[78px] rounded-[18px] bg-[#14b8a6] px-10 text-[22px] font-medium text-white hover:bg-[#0f9a89]"
+                className="h-[48px] rounded-lg bg-[#14b8a6] px-8 text-[16px] font-medium text-white hover:bg-[#0f9a89] w-full md:w-auto"
               >
                 View personalized recommendations
-                <ArrowRight className="ml-3 h-6 w-6" />
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </div>
           </>
         )}
       </main>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-[#f5f5f5]">
+      <Header />
+      <div className="flex items-center justify-center py-40">
+        <Loader2 className="h-10 w-10 animate-spin text-[#14b8a6]" />
+      </div>
+    </div>
+  );
+}
+
+export default function BloodAnalysisSummaryPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <BloodAnalysisSummaryContent />
+    </Suspense>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Header } from "@/components/layout/Header";
@@ -10,7 +10,7 @@ import { useAuthStore } from "@/core/stores/auth.store";
 import { uploadBloodTestResults } from "@/lib/api/blood-tests";
 import { BloodTestUploadModal } from "@/components/blood-analysis/BloodTestUploadModal";
 
-export default function BloodAnalysisPage() {
+function BloodAnalysisContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated } = useAuthStore();
@@ -167,5 +167,26 @@ export default function BloodAnalysisPage() {
         onUpload={handleUpload}
       />
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-[#F9FAFB]">
+      <div className="bg-white">
+        <Header />
+      </div>
+      <div className="flex items-center justify-center py-40">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" />
+      </div>
+    </div>
+  );
+}
+
+export default function BloodAnalysisPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <BloodAnalysisContent />
+    </Suspense>
   );
 }
